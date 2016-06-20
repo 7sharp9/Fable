@@ -3,6 +3,10 @@ module Fable.Main
 open System
 open System.IO
 open System.Reflection
+#if NETSTANDARD1_5
+open System.Runtime.Loader
+#else
+#endif
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.SourceCodeServices
@@ -42,7 +46,11 @@ let loadPlugins (opts: CompilerOptions): IPlugin list =
     opts.plugins
     |> Seq.collect (fun path ->
         try
+#if NETSTANDARD1_5
+            Assembly.Load(AssemblyLoadContext.GetAssemblyName(path)).GetTypes()
+#else
             (Path.GetFullPath path |> Assembly.LoadFile).GetTypes()
+#endif
             |> Seq.filter typeof<IPlugin>.IsAssignableFrom
             |> Seq.map Activator.CreateInstance
         with
