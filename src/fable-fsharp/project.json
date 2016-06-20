@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "emitEntryPoint": true,
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+            "Util/Util.fs",
+            "AST/AST.Common.fs",
+            "AST/AST.Fable.fs",
+            "AST/AST.Babel.fs",
+            "Replacements/CoreLibMethods.fs",
+            "Replacements/Replacements.fs",
+            "FSharp2Fable.Util.fs",
+            "FSharp2Fable.fs",
+            "Fable2Babel.fs",
+            "Main.fs"
+      ]
+    }
+  },
+  "dependencies": {
+    "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160316",
+    "FSharp.Compiler.Service.netcore": "1.0.0-alpha-00001",
+    "FSharp.Compiler.Service.ProjectCracker.netcore": "1.0.0-alpha-00001",
+    "Newtonsoft.Json": "9.0.1-beta1",
+    "Microsoft.NETCore.App": {
+      "type": "platform",
+      "version": "1.0.0-rc2-3002702"
+    }
+  },
+  "tools": {
+    "dotnet-compile-fsc": {
+      "version": "1.0.0-*",
+      "imports": [
+        "dnxcore50",
+        "portable-net45+win81",
+        "netstandard1.3"
+      ]
+    }
+  },
+  "frameworks": {
+    "netstandard1.5": {
+      "imports": [
+        "portable-net45+win8",
+        "dnxcore50"
+      ]
+    }
+  }
+}
