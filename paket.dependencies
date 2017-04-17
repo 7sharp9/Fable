@@ -1,19 +1,23 @@
 source https://www.nuget.org/api/v2
 
 nuget FAKE
-nuget FSharp.Compiler.Service
-nuget FSharp.Core redirects: force
+nuget FSharp.NET.Sdk
+nuget FSharp.Core
+#nuget FSharp.Compiler.Service
 nuget Newtonsoft.Json
-nuget NUnit
-nuget NUnit.Runners
+nuget System.ValueTuple
+nuget System.Xml.XDocument
+nuget System.Runtime.Loader
+nuget System.Reflection.TypeExtensions
+nuget xunit
+nuget xunit.runner.visualstudio
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
-github fsharp/FSharp.Compiler.Service src/fsharp/ReferenceResolver.fs
-github fsharp/FSharp.Compiler.Service src/fsharp/SimulatedMSBuildReferenceResolver.fs
+github fsharp/FAKE modules/Octokit/Octokit.fsx
 
 group Docs
   source https://www.nuget.org/api/v2
 
   nuget FAKE
-  nuget Suave
+#  nuget Suave
   nuget DotLiquid
   nuget FSharp.Formatting 2.14.2

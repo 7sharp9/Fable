@@ -1,6 +1,6 @@
-### 0.7.50
+### 1.0.0-narumi-909
 
-* Fix #747: Decimal comparison
+* Test
 
 ### 0.7.49
 

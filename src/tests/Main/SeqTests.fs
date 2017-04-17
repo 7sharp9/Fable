@@ -71,6 +71,24 @@ let ``Seq.concat works``() =
     sumFirstTwo ys
     |> equal 3.
 
+
+[<Test>]
+let ``Seq.chunkBySize works``() = 
+    let xs = [1;2;3]
+    Seq.chunkBySize 1 xs // [[1]; [2]; [3]]
+    |> Seq.length
+    |> equal 3
+
+    Seq.chunkBySize 2 xs // [[1;2]; [3]]
+    |> Seq.head
+    |> Seq.sum 
+    |> equal 3
+
+    Seq.chunkBySize 10 xs // [[1;2;3]]
+    |> Seq.head
+    |> Seq.sum
+    |> equal 6
+
 [<Test>]
 let ``Seq.collect works``() =
     let xs = [[1.]; [2.]; [3.]; [4.]]
@@ -82,6 +100,26 @@ let ``Seq.collect works``() =
     let ys1 = xs1 |> Seq.collect id
     sumFirstSeq ys1 5
     |> equal 15.
+
+[<Test>]
+let ``Seq.collect works with Options``() = 
+    let xss = [[Some 1; Some 2]; [None; Some 3]]
+    Seq.collect id xss
+    |> Seq.sumBy (function
+        | Some n -> n
+        | None -> 0
+    )
+    |> equal 6
+
+    seq {
+        for xs in xss do
+            for x in xs do
+                yield x
+    } 
+    |> Seq.length
+    |> equal 4
+
+
 
 [<Test>]
 let ``Seq.exists works``() =

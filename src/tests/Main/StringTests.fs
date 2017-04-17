@@ -48,6 +48,38 @@ let ``sprintf with percent symbols in arguments works``() = // See #329
       same "%% %%"
       same "%% % % %%"
 
+type MyUnion = Bar of int * int | Foo1 of string | Foo2 of string*string | Foo3 | Foo4 of MyUnion
+
+[<Test>]
+let ``Unions with sprintf %A``() =
+    Bar(1,5) |> sprintf "%A" |> equal "Bar (1,5)"
+    #if FABLE_COMPILER
+    Foo1 "ja" |> sprintf "%A" |> equal "Foo1 (\"ja\")"
+    Foo4 Foo3 |> sprintf "%A" |> equal "Foo4 (Foo3)"
+    Foo4(Foo1 "boo") |> sprintf "%A" |> equal "Foo4 (Foo1 (\"boo\"))"
+    #else
+    Foo1 "ja" |> sprintf "%A" |> equal "Foo1 \"ja\""
+    Foo4 Foo3 |> sprintf "%A" |> equal "Foo4 Foo3"
+    Foo4(Foo1 "boo") |> sprintf "%A" |> equal "Foo4 (Foo1 \"boo\")"
+    #endif
+    Foo3 |> sprintf "%A" |> equal "Foo3"
+    Foo4(Foo2("foo","bar")) |> sprintf "%A" |> equal "Foo4 (Foo2 (\"foo\",\"bar\"))"
+
+[<Test>]
+let ``Unions with string operator``() =
+    Bar(1,5) |> string |> equal "Bar (1,5)"
+    #if FABLE_COMPILER
+    Foo1 "ja" |> string |> equal "Foo1 (\"ja\")"
+    Foo4 Foo3 |> string |> equal "Foo4 (Foo3)"
+    Foo4(Foo1 "boo") |>string |> equal "Foo4 (Foo1 (\"boo\"))"
+    #else
+    Foo1 "ja" |> string |> equal "Foo1 \"ja\""
+    Foo4 Foo3 |> string |> equal "Foo4 Foo3"
+    Foo4(Foo1 "boo") |>string |> equal "Foo4 (Foo1 \"boo\")"
+    #endif
+    Foo3 |> string |> equal "Foo3"
+    Foo4(Foo2("foo","bar")) |> string |> equal "Foo4 (Foo2 (\"foo\",\"bar\"))"
+
 type Test(i: int) =
       override __.ToString() = string(i + i)
 
@@ -98,7 +130,8 @@ let ``String.Format with extra formatting works``() =
       let i = 0.5466788
       let dt = DateTime(2014, 9, 26).AddMinutes(19.)
       String.Format("{0:F2} {0:P2} {1:yyyy-MM-dd HH:mm}", i, dt)
-      |> equal "0.55 54.67 % 2014-09-26 00:19"
+            .Replace(",", ".").Replace(" %", "%")
+      |> equal "0.55 54.67% 2014-09-26 00:19"
 
 [<Test>]
 let ``Padding works``() =
@@ -117,10 +150,10 @@ let ``Padding with sprintf works``() =
 
 [<Test>]
 let ``Padding with String.Format works``() =
-    String.Format("{0,10:F1}", 3.14)  |> equal "       3.1"
-    String.Format("{0,-10:F1}", 3.14) |> equal "3.1       "
-    String.Format("{0,10}", 22)       |> equal "        22"
-    String.Format("{0,-10}", -22)     |> equal "-22       "
+    String.Format("{0,10:F1}", 3.14).Replace(",", ".")  |> equal "       3.1"
+    String.Format("{0,-10:F1}", 3.14).Replace(",", ".") |> equal "3.1       "
+    String.Format("{0,10}", 22)                         |> equal "        22"
+    String.Format("{0,-10}", -22)                       |> equal "-22       "
 
 // Conversions
 
@@ -373,6 +406,14 @@ let ``String.StartsWith works``() =
             |> equal (snd arg)
 
 [<Test>]
+let ``String.StartsWith with StringComparison works``() =
+      let args = [("ab", true); ("cd", false); ("abcdx", false)]
+      for arg in args do
+            "ABCD".StartsWith(fst arg, StringComparison.OrdinalIgnoreCase)
+            |> equal (snd arg)
+
+
+[<Test>]
 let ``String.EndsWith works``() =
       let args = [("ab", false); ("cd", true); ("abcdx", false)]
       for arg in args do
@@ -413,6 +454,13 @@ let ``String.TrimEnd with chars works``() =
 let ``String.Empty works``() =
       let s = String.Empty
       s |> equal ""
+
+[<Test>]
+let ``String.Chars works``() = 
+      let input = "hello"
+      input.Chars(2)
+      |> equal 'l'
+
 
 [<Test>]
 let ``String.Substring works``() =

@@ -62,44 +62,51 @@ let ``Lambdas are converted to delegates with dynamic operators``() =
     o?foo <- fun x y -> x / y
     o?foo(25, 5) |> unbox<int> |> equal 5
 
-// [<Test>]
-// let ``JS accepts any object as exception``() =
-//     try
-//         let o = createObj [ "foo" ==> 3 ]
-//         raise(unbox o)
-//     with ex -> ex.Message
-//     |> equal """{"foo":3}"""
+type IMyOptions =
+    interface end
 
-[<KeyValueList>]
 type MyOptions =
     | Flag1
     | Name of string
-    | [<CompiledName("QTY")>] QTY of int
+    | [<CompiledName("Foo")>] QTY of int
+    interface IMyOptions
+
+type MyOptions2 =
+    | Bar of int*int
+    interface IMyOptions
 
 [<Test>]
-let ``KeyValueList attribute works at compile time``() =
-    let opts = [
-        Name "Fable"
-        QTY 5
-        Flag1
-    ]
+let ``KeyValueList works at compile time``() =
+    let opts =
+        [ Name "Fable" :> IMyOptions
+        ; QTY 5 :> IMyOptions
+        ; Flag1 :> IMyOptions
+        ; Bar(2,3) :> IMyOptions ]
+        |> keyValueList CaseRules.LowerFirst
     opts?name |> unbox |> equal "Fable"
-    opts?QTY |> unbox |> equal 5
+    opts?foo |> unbox |> equal 5
     opts?flag1 |> unbox |> equal true
+    opts?bar?(1) |> unbox |> equal 3
+    let opts2 = keyValueList CaseRules.None [ Name "Fable"]
+    opts2?Name |> unbox |> equal "Fable"
 
 [<Test>]
-let ``KeyValueList attribute works at runtime``() =
+let ``KeyValueList works at runtime``() =
     let buildAtRuntime = function
-        | null | "" -> Flag1
-        | name -> Name name
-    let opts = [
-        buildAtRuntime "Fable"
-        QTY 5
-        buildAtRuntime ""
-    ]
+        | null | "" -> Flag1 :> IMyOptions
+        | name -> Name name :> IMyOptions
+    let opts =
+        [ buildAtRuntime "Fable"
+        ; QTY 5 :> IMyOptions
+        ; Bar(2,3) :> IMyOptions
+        ; buildAtRuntime ""]
+        |> keyValueList CaseRules.LowerFirst
     opts?name |> unbox |> equal "Fable"
-    opts?QTY |> unbox |> equal 5
+    opts?foo |> unbox |> equal 5
     opts?flag1 |> unbox |> equal true
+    opts?bar?(0) |> unbox |> equal 2
+    let opts2 = keyValueList CaseRules.None [ buildAtRuntime "Fable"]
+    opts2?Name |> unbox |> equal "Fable"
 
 let [<Emit("arguments.length")>] argCount: int = jsNative
 
@@ -124,6 +131,67 @@ let adder: IAdder = jsNative
 [<Test>]
 let ``Erase attribute works``() =
     adder.Add(4, 5) |> equal 9
+
+type TextStyle =
+    [<Emit("\"foo\"")>]
+    abstract Bar : string
+    [<Emit("$1+$2")>]
+    abstract Add : int*int -> int
+    [<Emit("$0[$1]{{=$2}}")>]
+    abstract Item : int->string option with get, set
+    [<Emit("$0.fontFamily{{=$1}}")>]
+    abstract FontFamily : string option with get, set
+    [<Emit("{{$1?\"foo\":\"bar\"}}")>]
+    abstract FontSize : bool -> string
+
+[<Test>]
+let ``Emit attribute works``() =
+    let style = createEmpty<TextStyle>
+    style.Bar |> equal "foo"
+    style.Add(3,5) |> equal 8
+
+[<Test>]
+let ``Emit attribute conditional parameters works``() =
+    let style = createEmpty<TextStyle>
+    style.FontFamily <- Some "ha"
+    style.FontFamily |> equal (Some "ha")
+    !!style?fontFamily |> equal "ha"
+    style.[5] <- Some "ho"
+    style.[5] |> equal (Some "ho")
+    style.[10] |> equal None
+
+[<Test>]
+let ``Emit attribute conditional syntax works``() =
+    let style = createEmpty<TextStyle>
+    style.FontSize(true) |> equal "foo"
+    style.FontSize(false) |> equal "bar"
+
+
+type InnerRecord = {
+    Float: float
+}
+
+type Record = {
+    String: string
+    Int: int
+    InnerRecord: InnerRecord
+}
+
+[<Test>]
+let ``nameof works``() =
+    let record = { String = ""; Int = 0; InnerRecord = { Float = 5.0 } }
+    nameof(record) |> equal "record"
+    nameof(record.String) |> equal "String"
+    nameof(record.Int) |> equal "Int"
+    nameof(record.InnerRecord) + "." + nameof(record.InnerRecord.Float)
+    |> equal "InnerRecord.Float"
+    nameof(typeof<Record>) |> equal "Record"
+    nameof(typeof<InnerRecord>) |> equal "InnerRecord"
+
+[<Test>]
+let ``nameofLambda works``() =
+    nameofLambda(fun (x:Record) -> x.String) |> equal "String"
+    nameofLambda(fun (x:Record) -> x.Int) |> equal "Int"
 
 [<StringEnum>]
 type MyStrings =
